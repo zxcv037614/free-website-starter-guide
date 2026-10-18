@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://zxcv037614.github.io/free-website-starter-guide/sitemap.xml
