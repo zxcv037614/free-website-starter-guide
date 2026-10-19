@@ -1,0 +1,8 @@
+{
+  "namespace": "TEST_ONLY_MEDIA",
+  "marker": "TEST_ONLY_MEDIA_BRIDGE_R1_20261020",
+  "packet_version": "V2",
+  "status": "DRIVE_READBACK_VERIFIED",
+  "synthetic": true,
+  "public_release": false
+}
