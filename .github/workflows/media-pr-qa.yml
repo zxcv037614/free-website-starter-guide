@@ -16,7 +16,7 @@ concurrency:
 jobs:
   qa:
     if: github.repository == 'zxcv037614/free-website-starter-guide' && github.ref == 'refs/heads/feat/media-systeme-seo-20261019'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     env:
       NO_EXTERNAL_MUTATION: '1'
