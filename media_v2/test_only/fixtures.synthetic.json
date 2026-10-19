@@ -1,0 +1,58 @@
+{
+  "namespace": "TEST_ONLY_MEDIA",
+  "description": "Entirely fictional material; *.example.invalid never denotes real source verification",
+  "known_paths": [
+    "/guide.html",
+    "/index.html"
+  ],
+  "sitemap_locs": [
+    "https://editorial.example.invalid/articles/test-only-lantern-workflow.html"
+  ],
+  "candidate": {
+    "packet_version": "V2",
+    "task_id": "TEST_ONLY_MEDIA_TASK_001",
+    "editorial_date_taiwan": "2026-10-19",
+    "topic_id": "TEST_ONLY_VIRTUAL_LANTERN_WORKFLOW",
+    "source_urls": [
+      "https://agency.example.invalid/release/fictional-lantern-v2",
+      "https://docs.example.invalid/guide/fictional-lantern-v2"
+    ],
+    "source_published_dates": [
+      "2026-10-18",
+      "2026-10-19"
+    ],
+    "verified_at": "2026-10-19",
+    "claim_evidence_map": [
+      {
+        "claim": "TEST_ONLY mock feature A exists",
+        "source_url": "https://agency.example.invalid/release/fictional-lantern-v2"
+      },
+      {
+        "claim": "TEST_ONLY mock guide covers setup",
+        "source_url": "https://docs.example.invalid/guide/fictional-lantern-v2"
+      }
+    ],
+    "target_reader": "TEST_ONLY 虛構燈籠流程初學者",
+    "search_intent": "how-to",
+    "new_value": "TEST_ONLY 整理虛構燈籠從建立到輸出驗證的操作順序，沒有真實產品",
+    "title": "TEST_ONLY 虛構燈籠工作流程：如何安全驗證範例步驟",
+    "meta_description": "TEST_ONLY 本頁只用虛構的燈籠編輯器展示繁體中文資訊文章的格式，包含假來源、測試日期、站內連結與利益揭露，不會發表真實文章或呼叫任何平台。",
+    "slug": "test-only-lantern-workflow",
+    "summary": "TEST_ONLY：這是隔離驗收用的虛構內容，不代表任何產品評測或新聞。",
+    "article_html_or_markdown": "TEST_ONLY 虛構燈籠工具只有示範用途。這份文字確認文章資料包含新的讀者說明、虛構來源與明確日期。\n\n操作流程是用純文字描述建立燈籠草稿、確認欄位與選擇適合的驗證方式；沒有連接真實服務。",
+    "internal_links": [
+      "/guide.html"
+    ],
+    "affiliate_disclosure": "TEST_ONLY 沒有真實聯盟連結、佣金或廣告合作。",
+    "self_brand_disclosure": "TEST_ONLY 虛構媒體與 TEST_ONLY 品牌有關聯，僅用於權限與揭露驗收。",
+    "media_brand": "TEST_ONLY_MEDIA_EDITORIAL",
+    "created_from_model": "TEST_ONLY_MOCK",
+    "human_tested": false,
+    "content_sha256": "e190faec299b850aa4672e6013d6d2530b812286ff3a8f4625e2bdca87a60b9f",
+    "stage_status": "DRAFT_READY",
+    "daily_publish_key": "media:2026-10-19:91f04f1746b8485d",
+    "source_doc_url": "https://docs.example.invalid/draft/fictional-editorial-packet",
+    "canonical_url": "https://editorial.example.invalid/articles/test-only-lantern-workflow.html",
+    "mentions_self_brand": false
+  }
+}
