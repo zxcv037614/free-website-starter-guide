@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TEST_ONLY Editorial Packet V2",
+  "description": "Offline synthetic candidate only. A valid packet does not authorize publication.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "packet_version",
+    "task_id",
+    "editorial_date_taiwan",
+    "topic_id",
+    "source_urls",
+    "source_published_dates",
+    "verified_at",
+    "claim_evidence_map",
+    "target_reader",
+    "search_intent",
+    "new_value",
+    "title",
+    "meta_description",
+    "slug",
+    "summary",
+    "article_html_or_markdown",
+    "internal_links",
+    "affiliate_disclosure",
+    "self_brand_disclosure",
+    "media_brand",
+    "created_from_model",
+    "human_tested",
+    "content_sha256",
+    "stage_status",
+    "daily_publish_key",
+    "source_doc_url",
+    "canonical_url"
+  ],
+  "properties": {
+    "packet_version": {
+      "const": "V2"
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^TEST_ONLY_"
+    },
+    "editorial_date_taiwan": {
+      "type": "string",
+      "format": "date"
+    },
+    "topic_id": {
+      "type": "string",
+      "pattern": "^TEST_ONLY_"
+    },
+    "source_urls": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "string",
+        "pattern": "^https://[a-z0-9.-]+\\.example\\.invalid/"
+      }
+    },
+    "source_published_dates": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "string",
+        "format": "date"
+      }
+    },
+    "verified_at": {
+      "type": "string",
+      "format": "date"
+    },
+    "claim_evidence_map": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "claim",
+          "source_url"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "claim": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_url": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "target_reader": {
+      "type": "string",
+      "minLength": 5
+    },
+    "search_intent": {
+      "type": "string",
+      "enum": [
+        "informational",
+        "how-to",
+        "comparison"
+      ]
+    },
+    "new_value": {
+      "type": "string",
+      "minLength": 12
+    },
+    "title": {
+      "type": "string",
+      "minLength": 12
+    },
+    "meta_description": {
+      "type": "string",
+      "minLength": 40,
+      "maxLength": 180
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^test-only-[a-z0-9-]+$"
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 12
+    },
+    "article_html_or_markdown": {
+      "type": "string",
+      "minLength": 40
+    },
+    "internal_links": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "affiliate_disclosure": {
+      "type": "string",
+      "minLength": 15
+    },
+    "self_brand_disclosure": {
+      "type": "string",
+      "minLength": 15
+    },
+    "media_brand": {
+      "type": "string",
+      "pattern": "^TEST_ONLY_"
+    },
+    "created_from_model": {
+      "const": "TEST_ONLY_MOCK"
+    },
+    "human_tested": {
+      "const": false
+    },
+    "content_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "stage_status": {
+      "const": "DRAFT_READY"
+    },
+    "daily_publish_key": {
+      "type": "string",
+      "pattern": "^media:"
+    },
+    "source_doc_url": {
+      "type": "string",
+      "pattern": "^https://[a-z0-9.-]+\\.example\\.invalid/"
+    },
+    "canonical_url": {
+      "type": "string",
+      "pattern": "^https://editorial\\.example\\.invalid/articles/test-only-"
+    },
+    "mentions_self_brand": {
+      "type": "boolean"
+    }
+  }
+}
