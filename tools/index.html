@@ -30,8 +30,8 @@
 <div class="topstripe"></div>
 <header class="masthead"><div class="container masthead-inner">
 <a class="logo" href="../index.html"><span class="logo-mark">AI↗</span>AI 工具<em>情報網</em></a>
-<nav class="mast-nav" aria-label="主選單"><a href="../index.html">首頁</a><a href="./">工具比較</a><a href="../members/">實戰會員</a><a href="../about.html">內容揭露</a></nav>
-</div></header>
+<nav class="mast-nav" aria-label="主選單"><a href="../index.html">首頁</a><a href="./">工具比較</a><a href="../members/">實戰會員</a><a href="../about.html">內容揭露</a></nav><button class="menu-toggle" id="navToggle" type="button" aria-expanded="false" aria-controls="mobileNav" aria-label="開啟選單">☰</button>
+</div><nav class="mobile-nav" id="mobileNav" aria-label="手機主選單" hidden><a href="../index.html">首頁</a><a href="./" aria-current="page">工具比較</a><a href="../members/">實戰會員</a><a href="../about.html">內容揭露</a></nav></header>
 <main class="page">
 <div class="breadcrumb"><a href="../index.html">首頁</a> ／ 工具比較</div>
 <div class="section-top" style="margin-top:26px">網站建置・電子報・工作流程</div>
@@ -70,4 +70,14 @@
 <p><a href="../index.html">← 返回 AI 工具情報網</a></p></section>
 </main>
 <footer><div class="container footergrid"><div><strong>AI 工具情報網</strong><p class="fineprint">獨立資訊整理・部分內容含已揭露的聯盟推薦。沒有實際測試就不聲稱實測；聯盟合作資格須分別確認。</p></div><div class="footer-links"><a href="../index.html">首頁</a><a href="../guide.html">免費建站指南</a><a href="../about.html">編輯準則與揭露</a></div></div></footer>
+<script>
+const mobileMenuButton = document.getElementById('navToggle');
+const mobileMenu = document.getElementById('mobileNav');
+mobileMenuButton?.addEventListener('click', () => {
+  const nextOpen = mobileMenu.hidden;
+  mobileMenu.hidden = !nextOpen;
+  mobileMenuButton.setAttribute('aria-expanded', String(nextOpen));
+  mobileMenuButton.setAttribute('aria-label', nextOpen ? '關閉選單' : '開啟選單');
+});
+</script>
 </body></html>
