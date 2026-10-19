@@ -22,7 +22,7 @@
 @media(max-width:700px){.grid2{grid-template-columns:1fr}.preview-hero{padding:25px}}
 </style>
 </head><body><div class="topstripe"></div>
-<header class="masthead"><div class="container masthead-inner"><a class="logo" href="../index.html"><span class="logo-mark">AI↗</span>AI 工具<em>情報網</em></a><nav class="mast-nav" aria-label="主選單"><a href="../index.html">首頁</a><a href="../tools/">工具比較</a><a href="../about.html">關於本站</a></nav></div></header>
+<header class="masthead"><div class="container masthead-inner"><a class="logo" href="../index.html"><span class="logo-mark">AI↗</span>AI 工具<em>情報網</em></a><nav class="mast-nav" aria-label="主選單"><a href="../index.html">首頁</a><a href="../tools/">工具比較</a><a href="../about.html">關於本站</a></nav><button class="menu-toggle" id="navToggle" type="button" aria-expanded="false" aria-controls="mobileNav" aria-label="開啟選單">☰</button></div><nav class="mobile-nav" id="mobileNav" aria-label="手機主選單" hidden><a href="../index.html">首頁</a><a href="../tools/">工具比較</a><a href="./" aria-current="page">實戰會員</a><a href="../about.html">關於本站</a></nav></header>
 <main class="wrap">
 <p style="font-size:13px"><a href="../index.html">首頁</a> ／ 會員預覽</p>
 <span class="status">服務規劃中・目前未開放付款</span>
@@ -59,4 +59,14 @@
 <section class="bottom"><h2>先免費了解適合自己的工具</h2><p>如果上面這種完整步驟對你有幫助，先從已有的工具比較與免費教學開始。未來若會員真的開放，會在本站明確公告。</p><a href="../tools/">看 5 款工具比較 →</a><p style="margin-top:25px"><a href="../index.html" style="background:none;padding:0;color:#1d62ed">← 回首頁</a></p></section>
 </main>
 <footer><div class="container footergrid"><div><strong>AI 工具情報網</strong><p class="fineprint">獨立內容／聯盟副業線。自有付費會員尚處提案階段，與 Phantom AI 私人 AI 訂閱方案無關。</p></div><div class="footer-links"><a href="../index.html">首頁</a><a href="../tools/">工具比較</a><a href="../about.html">編輯準則與揭露</a></div></div></footer>
+<script>
+const mobileMenuButton = document.getElementById('navToggle');
+const mobileMenu = document.getElementById('mobileNav');
+mobileMenuButton?.addEventListener('click', () => {
+  const nextOpen = mobileMenu.hidden;
+  mobileMenu.hidden = !nextOpen;
+  mobileMenuButton.setAttribute('aria-expanded', String(nextOpen));
+  mobileMenuButton.setAttribute('aria-label', nextOpen ? '關閉選單' : '開啟選單');
+});
+</script>
 </body></html>
