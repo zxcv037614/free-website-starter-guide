@@ -165,6 +165,8 @@ class TestV2BDurableShadow(unittest.TestCase):
         for params in ({"secret_required":True},{"secret_value":"TEST_ONLY_CANNOT_USE"},
                        {"external_network":True}):
             self.assertEqual(self.prepare(runtime=params), "SECRET_HOLD")
+        for params in ({"external_send":True}, {"real_article":True}, {"production_target":True}):
+            self.assertEqual(self.prepare(runtime=params), "SECRET_HOLD")
         self.assertEqual(self.journal.count(), 0)
 
     def test_15_base_or_allowed_path_drift_is_hold(self):
