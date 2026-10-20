@@ -1,0 +1,77 @@
+name: AI Media V2-B TEST_ONLY one-shot durable shadow acceptance
+on:
+  push:
+    branches:
+      - isolation/ai-tools-media-v2b-durable-shadow-testonly-20261020
+    paths:
+      - .github/workflows/media-v2b-shadow-r1.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-media-v2b-testonly-shadow-r1-once
+  cancel-in-progress: false
+
+jobs:
+  synthetic-only:
+    if: github.repository == 'zxcv037614/free-website-starter-guide' && github.ref == 'refs/heads/isolation/ai-tools-media-v2b-durable-shadow-testonly-20261020'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      NO_EXTERNAL_MUTATION: '1'
+      TEST_ONLY_NAMESPACE: TEST_ONLY_MEDIA
+      CI: 'true'
+    steps:
+      - name: Checkout isolated TEST_ONLY repository read-only
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Verify pinned ancestor, six original blobs, and exactly three additions
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os, subprocess
+          from pathlib import Path
+          base="45301570257d1d1ea9af8e69dcd4e8a4b88b8a53"
+          expected_main="a97d0e2dac586ed9ea25a6ceccd18416f6ab4dcf"
+          inherited={
+            "media_v2/test_only/bridge_probe_r1.json":"def62bc0ef75dfd90f402a388d1ac8f96ebce2c5",
+            "media_v2/test_only/editorial_packet_v2.schema.json":"ea5a1215337564f98d8c29051db3df8693b4c3db",
+            "media_v2/test_only/fixtures.synthetic.json":"ccd5183ca16833c48830fcb9c644d1a95f05ff15",
+            "media_v2/test_only/packet_validator.py":"2550f8bc9f9038afb4f60b41c86a14f5c1210167",
+            "media_v2/test_only/render_static_candidate.py":"0cbf820d89d99e48d42867789ec6a6065750f45f",
+            "media_v2/test_only/test_pipeline.py":"86fda51f3b8e92a95074d5f4868cd5908e8849e3"}
+          newly_added={
+            "media_v2/test_only/durable_shadow_r1.py",
+            "media_v2/test_only/test_durable_shadow_r1.py",
+            ".github/workflows/media-v2b-shadow-r1.yml"}
+          def git(*args):
+            return subprocess.check_output(["git",*args],text=True).strip()
+          assert os.environ.get("NO_EXTERNAL_MUTATION")=="1","ISOLATION_ENV_HOLD"
+          assert os.environ.get("TEST_ONLY_NAMESPACE")=="TEST_ONLY_MEDIA","NAMESPACE_HOLD"
+          assert os.environ.get("GITHUB_REF")=="refs/heads/isolation/ai-tools-media-v2b-durable-shadow-testonly-20261020","BRANCH_HOLD"
+          assert git("rev-parse","origin/main")==expected_main,"MAIN_DRIFT_HOLD"
+          assert git("merge-base",base,"HEAD")==base,"V2A_ANCESTRY_HOLD"
+          changed=set(git("diff","--name-only",base+"...HEAD").splitlines())
+          assert changed==newly_added,f"PATH_SCOPE_HOLD {changed}"
+          changes=git("diff","--name-status",base+"...HEAD").splitlines()
+          assert len(changes)==3 and all(line.startswith("A\t") for line in changes),f"NOT_ADD_ONLY_HOLD {changes}"
+          for file,expected_blob in inherited.items():
+            assert Path(file).is_file(),f"MISSING_ORIGINAL_FILE_HOLD {file}"
+            assert git("hash-object",file)==expected_blob,f"ORIGINAL_BLOB_DRIFT_HOLD {file}"
+          for file in newly_added:
+            assert Path(file).is_file(),f"NEW_FILE_MISSING_HOLD {file}"
+          print("TEST_ONLY_V2B_SCOPE_PASS: six V2A blobs unchanged; exactly 3 add-only TEST_ONLY paths, pinned main/base, no prod/paid")
+          PY
+
+      - name: Execute incremental V2-B synthetic durability tests only
+        shell: bash
+        run: |
+          test "$NO_EXTERNAL_MUTATION" = "1"
+          test "$TEST_ONLY_NAMESPACE" = "TEST_ONLY_MEDIA"
+          python3 --version
+          python3 -m unittest discover -s media_v2/test_only -p 'test_durable_shadow_r1.py' -v
+          echo 'TEST_ONLY_V2B_DURABLE_SHADOW_QA_PASS: incremental synthetic tests only; no real release, 0 external mutation'
