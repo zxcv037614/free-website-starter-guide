@@ -1,0 +1,188 @@
+name: AI Copilot one-shot isolated Chromium QA
+on:
+  push:
+    branches:
+      - feat/media-copilot-deprecation-article-20261020
+    paths:
+      - .github/workflows/media-copilot-qa.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-media-copilot-free-qa-r1
+  cancel-in-progress: false
+
+jobs:
+  qa:
+    if: github.repository == 'zxcv037614/free-website-starter-guide' && github.ref == 'refs/heads/feat/media-copilot-deprecation-article-20261020'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      NO_EXTERNAL_MUTATION: '1'
+      CI: 'true'
+    steps:
+      - name: Checkout isolated source read only
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Exact scope blob metadata sources and link gate
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          from urllib.parse import urlsplit
+          import subprocess, posixpath, xml.etree.ElementTree as ET, re
+          import os
+          base="b02c62e9e14461deb2d98d0cdc2c814a4a07103c"
+          slug="articles/github-copilot-model-retirement-2026-10.html"
+          wf=".github/workflows/media-copilot-qa.yml"
+          checks={slug:"0da3cf27a0c4106ba154e64b22bb1bec353df85e",
+                  "index.html":"189ae7dd6191af1d89d9610675454f79760830f8",
+                  "sitemap.xml":"8789b2d729ade1320ccb06bde0350d1dbee53aaa"}
+          assert os.environ.get("NO_EXTERNAL_MUTATION")=="1"
+          assert os.environ.get("GITHUB_REF")=="refs/heads/feat/media-copilot-deprecation-article-20261020"
+          assert subprocess.check_output(["git","rev-parse","origin/main"],text=True).strip()==base,"FAIL_CLOSED_MAIN_DRIFT"
+          changed=set(subprocess.check_output(["git","diff","--name-only",base+"...HEAD"],text=True).splitlines())
+          assert changed==set(checks)|{wf},f"FAIL_CLOSED_PATHS {sorted(changed)}"
+          for p,expected in checks.items():
+              actual=subprocess.check_output(["git","hash-object",p],text=True).strip()
+              assert actual==expected,f"FAIL_CLOSED_BLOB {p} {actual}"
+          class H(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.links=[]; self.h1=0; self.titles=0; self.meta=[]
+              def handle_starttag(self,tag,attrs):
+                  a=dict(attrs)
+                  if tag=="h1": self.h1+=1
+                  if tag=="title": self.titles+=1
+                  if tag=="meta": self.meta.append(a)
+                  if tag in ("a","link","img","script"):
+                      u=a.get("href",a.get("src",""))
+                      if u:self.links.append(u)
+          for path in (slug,"index.html"):
+              text=Path(path).read_text(encoding="utf-8")
+              parser=H();parser.feed(text)
+              assert parser.h1==1 and parser.titles==1,f"FAIL_SEO_HEADING {path}"
+              assert any(m.get("name")=="viewport" for m in parser.meta),path
+              assert any(m.get("name")=="description" and len(m.get("content",""))>=40 for m in parser.meta),path
+              for href in parser.links:
+                  url=urlsplit(href)
+                  if url.scheme or href.startswith("#") or href.startswith("//"):continue
+                  target=posixpath.normpath(posixpath.join(posixpath.dirname(path),url.path))
+                  if target==".":target="index.html"
+                  elif target.endswith("/"):target+="index.html"
+                  assert Path(target).is_file(),f"BROKEN_LOCAL_LINK {path} to {href}"
+          article=Path(slug).read_text(encoding="utf-8")
+          home=Path("index.html").read_text(encoding="utf-8")
+          sitemap=Path("sitemap.xml").read_text(encoding="utf-8")
+          pairs=[("Gemini 3.7 Flash","Gemini 3.8 Flash"),("GPT-5.5","GPT-6.1 Sol"),
+                 ("GPT-5.4","GPT-6.1 Sol"),("GPT-5.4 mini","GPT-6 Luna"),
+                 ("GPT-5 mini","GPT-6 Luna"),("Grok 4.5","Grok 4.7")]
+          assert all("<td>"+a+"</td><td>"+b+"</td>" in article for a,b in pairs),"MAPPING_INVALID"
+          assert "GPT-5.6 Sol" not in article and "GPT-5.6 Luna" not in article
+          assert '<td>Grok 4.6</td>' not in article
+          assert "2026-10-19-github-copilot-models-deprecated-on-october-19-2026/" in article
+          assert "2026-09-18-upcoming-deprecation-of-selected-github-copilot-models-in-mid-october/" in article
+          assert "與 Phantom AI 有關聯" in article and "非實測" in article
+          assert "沒有使用六款模型逐一登入實測" in article
+          assert "choose-ai-tool.html" in article
+          assert '<link rel="canonical" href="https://zxcv037614.github.io/free-website-starter-guide/'+slug+'">' in article
+          assert home.count('href="'+slug+'"')==2
+          assert home.count('class="article-card"')==6
+          root=ET.fromstring(sitemap)
+          urls=[node.text for node in root.iter() if node.tag.endswith("loc")]
+          assert len(urls)==10 and len(set(urls))==10
+          assert urls.count("https://zxcv037614.github.io/free-website-starter-guide/"+slug)==1
+          old=ET.fromstring(subprocess.check_output(["git","show",base+":sitemap.xml"],text=True))
+          originals=[x.text for x in old.iter() if x.tag.endswith("loc")]
+          assert len(originals)==9 and urls[:9]==originals
+          print("STATIC_QA_PASS exact source Git blobs 3, allowed 4-path QA scope, 6 model mappings, SEO, disclosures, URLs, 10 unique sitemap")
+          PY
+
+      - name: Python standard runner
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install actual Chromium for isolated browser tests
+        shell: bash
+        run: |
+          python -m pip install --disable-pip-version-check playwright==1.56.0
+          python -m playwright install --with-deps chromium
+
+      - name: Run real mobile and desktop browser QA and screenshots
+        shell: bash
+        run: |
+          mkdir -p qa-evidence
+          python -m http.server 8765 --bind 127.0.0.1 > qa-evidence/server.log 2>&1 &
+          sleep 2
+          python - <<'PY'
+          import json, subprocess, xml.etree.ElementTree as ET
+          from pathlib import Path
+          from urllib.parse import urlsplit
+          from playwright.sync_api import sync_playwright
+          base="http://127.0.0.1:8765/"
+          slug="articles/github-copilot-model-retirement-2026-10.html"
+          paths=[("article",slug),("home","index.html")]
+          folder=Path("qa-evidence");folder.mkdir(exist_ok=True)
+          manifest={"namespace":"AI_MEDIA_COPILOT_ONE_SHOT","scope":"ISOLATED_QA_ONLY",
+                    "published":False,"git_head":subprocess.check_output(["git","rev-parse","HEAD"],text=True).strip(),
+                    "blobs":{p:subprocess.check_output(["git","hash-object",p],text=True).strip()
+                             for _,p in paths+[("sitemap","sitemap.xml")]},
+                    "screenshots":[],"checks":[]}
+          with sync_playwright() as pw:
+              browser=pw.chromium.launch(headless=True)
+              manifest["browser_version"]=browser.version
+              for label,width,height in [("mobile-375",375,812),("desktop-1440",1440,900)]:
+                  ctx=browser.new_context(viewport={"width":width,"height":height},device_scale_factor=1)
+                  for name,route in paths:
+                      pg=ctx.new_page()
+                      def local_only(req):
+                          if req.request.url.startswith(base):req.continue_()
+                          else:req.abort()
+                      pg.route("**/*",local_only)
+                      resp=pg.goto(base+route,wait_until="load",timeout=30000)
+                      assert resp and resp.status==200,f"HTTP_NOT_200 {label} {name}"
+                      pg.locator("main").wait_for(state="visible")
+                      assert pg.locator("h1").count()==1,f"H1_COUNT {label} {name}"
+                      dims=pg.evaluate("({width:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth})")
+                      assert dims["scroll"]<=dims["width"]+2,f"HORIZONTAL_OVERFLOW {label} {name} {dims}"
+                      if name=="article":
+                          content=pg.locator("main").inner_text()
+                          assert "GPT-6.1 Sol" in content and "GPT-6 Luna" in content and "Grok 4.7" in content
+                          assert pg.locator('a[href*="2026-10-19-github-copilot-models-deprecated"]').count()==1
+                          assert pg.locator('a[href*="choose-ai-tool.html"]').count()==1
+                          assert pg.locator("table").count()==1
+                      if name=="home":
+                          assert pg.locator('a[href="'+slug+'"]').count()==2
+                      if label=="mobile-375":
+                          button=pg.locator("#menuBtn" if name=="article" else "#navToggle")
+                          assert button.is_visible(),f"MENU_HIDDEN {name}"
+                          button.click()
+                          assert button.get_attribute("aria-expanded")=="true",f"MENU_NOT_OPEN {name}"
+                      filename=f"{label}-{name}.png"
+                      pg.screenshot(path=str(folder/filename),full_page=True)
+                      manifest["screenshots"].append(filename)
+                      manifest["checks"].append({"page":name,"viewport":label,"status":200,
+                                                   "no_overflow":True,"h1":1,"menu_checked":label=="mobile-375",
+                                                   "screenshot":filename})
+                      pg.close()
+                  ctx.close()
+              browser.close()
+          assert len(manifest["screenshots"])==4
+          (folder/"manifest.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding="utf-8")
+          print("BROWSER_QA_PASS exact checked-out article and homepage 375px + 1440px, 4 screenshots, 0 overflow")
+          print("QA_MANIFEST "+json.dumps(manifest,ensure_ascii=False))
+          PY
+
+      - name: Keep one day of screenshots and proof only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-media-copilot-one-shot-qa
+          path: qa-evidence/
+          retention-days: 1
+          if-no-files-found: warn
