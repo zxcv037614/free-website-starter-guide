@@ -81,6 +81,8 @@ class DurableShadowJournal:
         runtime_status = validate_runtime(runtime)
         if runtime_status["status"] != "RUNTIME_TEST_ONLY_OK":
             return runtime_status["status"]
+        if isinstance(runtime, dict) and (runtime.get("external_send") or runtime.get("real_article") or runtime.get("production_target")):
+            return "SECRET_HOLD"
         scope_status = validate_scope(TEST_SCOPE if scope is None else scope)
         if scope_status["status"] != "SCOPE_TEST_ONLY_OK":
             return scope_status["status"]
