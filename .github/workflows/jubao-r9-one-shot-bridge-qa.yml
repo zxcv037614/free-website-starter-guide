@@ -1,0 +1,20 @@
+name: Jubao R9 isolated offline bridge one-shot QA
+on:
+  push:
+    branches:
+      - sandbox/jubao-v10-r9-offline-paper-report-20261108
+    paths:
+      - .github/workflows/jubao-r9-one-shot-bridge-qa.yml
+permissions:
+  contents: read
+jobs:
+  paper-only-offline-bridge:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate synthetic offline report safety checks (no network API calls)
+        run: node --test jubao-preview/qa/r9-offline-paper-report.test.cjs
