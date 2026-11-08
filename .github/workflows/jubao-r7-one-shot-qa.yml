@@ -10,7 +10,7 @@ permissions:
 jobs:
   paper-only-browser-qa:
     name: R7 paper-only browser QA (public standard runner)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
