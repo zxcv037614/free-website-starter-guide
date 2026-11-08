@@ -1,0 +1,33 @@
+name: Jubao R8 one-shot isolated Chromium QA
+on:
+  push:
+    branches:
+      - sandbox/jubao-v10-r8-report-freshness-20261108
+    paths:
+      - .github/workflows/jubao-r8-one-shot-qa.yml
+permissions:
+  contents: read
+jobs:
+  paper-only-browser-qa:
+    name: R8 paper-only browser QA (public standard runner)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright test dependency only
+        run: npm install --no-save --no-package-lock playwright@1.56.1
+      - name: Install open-source Chromium browser
+        run: npx playwright install chromium
+      - name: Run local sandbox HTML QA with synthetic data only
+        run: node jubao-preview/qa/r8-browser-qa.cjs
+      - name: Retain short-lived screenshot evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jubao-r8-chromium-one-shot-evidence
+          path: jubao-preview/qa/artifacts/*.png
+          if-no-files-found: ignore
+          retention-days: 1
