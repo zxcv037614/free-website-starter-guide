@@ -1,0 +1,31 @@
+name: Jubao R11 isolated SQLite-to-browser E2E one-shot
+on:
+  push:
+    branches:
+      - sandbox/jubao-v10-r11-endtoend-paper-import-20261108
+    paths:
+      - .github/workflows/jubao-r11-one-shot-e2e.yml
+permissions:
+  contents: read
+jobs:
+  offline-paper-e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated Chromium QA dependency
+        run: npm install --no-save --no-package-lock playwright@1.56.1
+      - name: Install open-source Chromium test browser
+        run: npx playwright install chromium
+      - name: R9 source validation unit tests
+        run: node --test jubao-preview/qa/r9-offline-paper-report.test.cjs
+      - name: R10 synthetic SQLite unit tests
+        run: python -m unittest discover -s jubao-preview/qa -p 'test_r10_offline_export.py' -v
+      - name: R11 SQLite to actual browser JSON import test - synthetic only
+        run: node jubao-preview/qa/r11-sqlite-to-browser-e2e.cjs
