@@ -77,7 +77,10 @@ async function main() {
       await page.locator('[data-nav="reports"]').click();
       async function upload(data,name='test.json'){
         const buf=typeof data==='string'?Buffer.from(data):Buffer.from(JSON.stringify(data));
+        await page.locator('#importFile').setInputFiles([]);
+        await page.locator('#importStatus').evaluate(el=>{el.textContent='PENDING_QA';});
         await page.locator('#importFile').setInputFiles({name,mimeType:'application/json',buffer:buf});
+        await page.waitForFunction(()=>document.querySelector('#importStatus').textContent!=='PENDING_QA',{timeout:8000});
         return await page.locator('#importStatus').textContent();
       }
       let st=await upload(base,'qa-valid.json');
