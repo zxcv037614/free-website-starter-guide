@@ -1,0 +1,35 @@
+name: Jubao R10 isolated offline SQLite one-shot QA
+on:
+  push:
+    branches:
+      - sandbox/jubao-v10-r10-offline-sqlite-export-20261108
+    paths:
+      - .github/workflows/jubao-r10-one-shot-offline-qa.yml
+permissions:
+  contents: read
+jobs:
+  paper-only-contract-qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: R9 local-only JSON gate tests (synthetic data)
+        run: node --test jubao-preview/qa/r9-offline-paper-report.test.cjs
+      - name: R10 read-only SQLite exporter tests (synthetic data)
+        run: python -W error::ResourceWarning -m unittest discover -s jubao-preview/qa -p 'test_r10_offline_export.py' -v
+      - name: Confirm R10 never added network/order imports
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          source=Path('jubao-preview/bridge/export-offline-paper-report.py').read_text()
+          for forbidden in ('requests.', 'urllib.request', 'http.client', 'subprocess.', 'os.system(', 'popen('):
+              assert forbidden not in source, f'Forbidden network or subprocess entry: {forbidden}'
+          assert "immutable=1" in source and "PRAGMA query_only=ON" in source
+          print('PASS: offline-only static gate')
+          PY
