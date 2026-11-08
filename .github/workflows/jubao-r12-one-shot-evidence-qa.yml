@@ -1,0 +1,34 @@
+name: Jubao R12 isolated offline runtime evidence one-shot
+on:
+  push:
+    branches:
+      - sandbox/jubao-v10-r12-offline-runtime-evidence-20261108
+    paths:
+      - .github/workflows/jubao-r12-one-shot-evidence-qa.yml
+permissions:
+  contents: read
+jobs:
+  offline-evidence-qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: R9 historical source safety regression
+        run: node --test jubao-preview/qa/r9-offline-paper-report.test.cjs
+      - name: R10 offline SQLite exporter regression
+        run: python -m unittest discover -s jubao-preview/qa -p 'test_r10_offline_export.py' -v
+      - name: R12 sanitized tri-engine runtime observation safety tests
+        run: node --test jubao-preview/qa/r12-offline-runtime-evidence.test.cjs
+      - name: R12 offline-only static guard
+        shell: bash
+        run: |
+          set -eu
+          ! grep -Eq 'require\(.?(node:)?(http|https|net|tls|child_process)' jubao-preview/bridge/r12-offline-runtime-evidence.cjs
+          ! grep -Eq 'fetch\(|process\.env|execSync|spawnSync' jubao-preview/bridge/r12-offline-runtime-evidence.cjs
+          echo 'R12 static offline-only guard PASS (source check; not VPS evidence)'
