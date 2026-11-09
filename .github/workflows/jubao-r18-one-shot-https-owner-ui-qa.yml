@@ -1,0 +1,74 @@
+name: JUBAO R18 HTTPS owner mobile original UI one-shot QA
+# Isolated on push only; no cron, no VPS, no Render, no production keys.
+on:
+  push:
+    branches:
+      - sandbox/jubao-v10-r18-https-owner-mobile-e2e-20261109
+    paths:
+      - '.github/workflows/jubao-r18-one-shot-https-owner-ui-qa.yml'
+      - 'jubao-preview/bridge/r17_local_owner_session_gateway.py'
+      - 'jubao-preview/bridge/r16_owner_dashboard_sync.js'
+      - 'jubao-preview/bridge/r18_local_owner_login.js'
+      - 'jubao-preview/qa/r18_synthetic_https_fixture.py'
+      - 'jubao-preview/qa/r18-https-owner-mobile-e2e.cjs'
+      - 'jubao-preview/bridge/README_R18_HTTPS_OWNER_UI_E2E.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  r18-https-owner-e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Static syntax safety
+        run: |
+          python3 -m py_compile jubao-preview/bridge/r17_local_owner_session_gateway.py jubao-preview/qa/r18_synthetic_https_fixture.py
+          node --check jubao-preview/bridge/r16_owner_dashboard_sync.js
+          node --check jubao-preview/bridge/r18_local_owner_login.js
+          node --check jubao-preview/qa/r18-https-owner-mobile-e2e.cjs
+      - name: R14 read-only WAL synthetic regression
+        run: python3 -m unittest discover -s jubao-preview/qa -p 'test_r14_live_wal_aggregate.py' -v
+      - name: R15 authenticated localhost API synthetic regression
+        run: python3 -m unittest discover -s jubao-preview/qa -p 'test_r15_private_paper_endpoint.py' -v
+      - name: R17 isolated Owner Session synthetic regression
+        run: python3 -m unittest discover -s jubao-preview/qa -p 'test_r17_owner_session_gateway.py' -v
+      - name: Install Chromium for original UI mobile QA
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install chromium
+      - name: R11 original five-page regression
+        run: node jubao-preview/qa/r11-sqlite-to-browser-e2e.cjs
+      - name: R16 same-origin report five-page regression
+        run: node jubao-preview/qa/r16-owner-dashboard-sync-e2e.cjs
+      - name: Generate ONE ephemeral self-signed localhost certificate
+        run: |
+          openssl req -x509 -newkey rsa:2048 -sha256 -days 1 -nodes \
+            -keyout "$RUNNER_TEMP/jubao-r18-ci.key" -out "$RUNNER_TEMP/jubao-r18-ci.crt" \
+            -subj "/CN=localhost" -addext "subjectAltName=IP:127.0.0.1,DNS:localhost" \
+            1>/dev/null 2>/dev/null
+          echo "R18_TLS_CERT=$RUNNER_TEMP/jubao-r18-ci.crt" >> "$GITHUB_ENV"
+          echo "R18_TLS_KEY=$RUNNER_TEMP/jubao-r18-ci.key" >> "$GITHUB_ENV"
+      - name: R18 actual HTTPS Chromium -> R17 -> R15 -> original R8 dashboard (SYNTHETIC)
+        run: node jubao-preview/qa/r18-https-owner-mobile-e2e.cjs
+      - name: Confirm original UI and no browser secret injection
+        run: |
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const orig=fs.readFileSync('jubao-preview/index.html');
+          const r18=fs.readFileSync('jubao-preview/bridge/r18_local_owner_login.js','utf8');
+          if(orig.length<1000000)throw Error('original whale UI replaced');
+          if(/localStorage|JUBAO_R15_OWNER_TOKEN|Authorization\s*:|0\.0\.0\.0/.test(r18))
+            throw Error('R18 browser contains an unsafe secret or network control');
+          if(!r18.includes("'/api/v1/owner/session'")||!r18.includes("'/api/v1/owner/logout'"))
+            throw Error('R18 session endpoints missing');
+          console.log('R18 ORIGINAL UI/LOGO RETAINED; NO AUTH TOKEN IN BROWSER SOURCE');
+          NODE
