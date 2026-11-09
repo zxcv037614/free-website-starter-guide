@@ -35,7 +35,9 @@ let passed=0;
 function check(message,condition){assert.ok(condition,message);passed++;console.log('PASS',passed,message);}
 async function main(){
   let mode='good',value=fixture(),calls=[],server,browser;
-  const html=original.replace('</body>','<script defer src="/bridge/r16_owner_dashboard_sync.js"></script></body>');
+  // Existing R8 CSP allows only inline scripts. Inject vetted static module during SANDBOX response build.
+  // Do not change the underlying original index.html blob or its restrictive CSP.
+  const html=original.replace('</body>','<script>\n'+bridge.toString('utf8')+'\n</script></body>');
   if(html===original)throw Error('Original black-gold R8 HTML missing closing body tag');
   const originHash=require('node:crypto').createHash('sha256').update(original).digest('hex');
   server=http.createServer((req,res)=>{
@@ -95,7 +97,7 @@ async function main(){
           visibility:document.visibilityState,
           modulePresent:Boolean(window.__JUBAO_R16__),
           state:window.__JUBAO_R16__?.getState(),
-          r16Script:Boolean(document.querySelector('script[src="/bridge/r16_owner_dashboard_sync.js"]')),
+          r16Script:Boolean([...document.querySelectorAll("script")].some(x=>x.textContent.includes("JUBAO R16 | owner-session")),
           panelCount:document.querySelectorAll('.r16-owner-panel').length
         }));
         throw new Error('R16 owner initialization diagnostic: '+JSON.stringify({diagnostic,
