@@ -86,7 +86,7 @@ class R15PrivateEndpointTests(unittest.TestCase):
         self.conn.commit()
         result = self.get()[1]
         self.assertEqual(result['engines'][0]['closed_trades'], 2)
-        self.assertEqual(result['engines'][0]['realized_pnl_usdt'], '7.0')
+        self.assertEqual(result['engines'][0]['realized_pnl_usdt'], '7.00')
 
     def test_03_missing_authorization_is_denied(self):
         self.start()
