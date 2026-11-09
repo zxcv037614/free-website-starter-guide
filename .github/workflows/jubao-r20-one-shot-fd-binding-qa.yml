@@ -1,0 +1,52 @@
+name: JUBAO R20 process-to-paper-db FD evidence one-shot QA
+# On isolated source push only, no cron, no DigitalOcean/Render access.
+on:
+  push:
+    branches:
+      - sandbox/jubao-v10-r20-readonly-db-fd-binding-20261109
+    paths:
+      - '.github/workflows/jubao-r20-one-shot-fd-binding-qa.yml'
+      - 'jubao-preview/bridge/r20_readonly_fd_binding_probe.py'
+      - 'jubao-preview/qa/test_r20_readonly_fd_binding_probe.py'
+      - 'jubao-preview/bridge/README_R20_FD_PROBE_OWNER_GATE.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  r20-source-metadata:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Syntax / no-bytecode guard
+        run: |
+          python3 -m py_compile jubao-preview/bridge/r20_readonly_fd_binding_probe.py jubao-preview/qa/test_r20_readonly_fd_binding_probe.py
+      - name: R14 hardlink and dryrun WAL regression
+        run: python3 -m unittest discover -s jubao-preview/qa -p 'test_r14_live_wal_aggregate.py' -v
+      - name: R15 local owner report regression
+        run: python3 -m unittest discover -s jubao-preview/qa -p 'test_r15_private_paper_endpoint.py' -v
+      - name: R17 local Session regression
+        run: python3 -m unittest discover -s jubao-preview/qa -p 'test_r17_owner_session_gateway.py' -v
+      - name: R19 offline source provenance regression
+        run: python3 -m unittest discover -s jubao-preview/qa -p 'test_r19_offline_source_preflight.py' -v
+      - name: R20 mock proc files and non-sensitive FD identity regression
+        run: python3 -m unittest discover -s jubao-preview/qa -p 'test_r20_readonly_fd_binding_probe.py' -v
+      - name: No live host, credentials or dangerous probes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('jubao-preview/bridge/r20_readonly_fd_binding_probe.py').read_text()
+          ui=Path('jubao-preview/index.html')
+          assert ui.stat().st_size>1_000_000
+          for bad in ("import sqlite3", "import docker", "import requests", "import subprocess",
+                      "os.environ", "read_bytes(", "cmdline").read_", "environ").read_"):
+              assert bad not in s, bad
+          assert 'st_ino' in s and 'st_dev' in s and '/ "comm"' in s and '/ "fd"' in s
+          assert 'paper_profit_verified": False' in s
+          print('JUBAO_R20_FILE_DESCRIPTOR_METADATA_ONLY_PASS')
+          PY
