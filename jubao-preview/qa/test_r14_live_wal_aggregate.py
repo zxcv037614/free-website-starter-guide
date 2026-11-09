@@ -61,6 +61,17 @@ class LiveWalAggregateTest(unittest.TestCase):
     def test_reject_same_database_both_engines(self):
         db=self.db()
         with self.assertRaises(r14.Rejected):r14.generate(db,db)
+    def test_reject_hardlinked_spot_and_futures_same_inode(self):
+        p = self.db('spot', trades=[(0, 9.25)])
+        directory = self.root / 'futures'
+        directory.mkdir(exist_ok=True)
+        alias = directory / 'tradesv3.dryrun.sqlite'
+        os.link(p, alias)
+        self.assertNotEqual(str(p), str(alias))
+        self.assertEqual(p.stat().st_ino, alias.stat().st_ino)
+        with self.assertRaises(r14.Rejected):
+            r14.generate(p, alias)
+
     def test_reject_incomplete_wal_shm(self):
         db=self.db()
         os.unlink(str(db)+'-shm')
