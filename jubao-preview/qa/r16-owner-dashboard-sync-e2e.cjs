@@ -88,7 +88,20 @@ async function main(){
       });
       mode='good';value=fixture();calls=[];
       await page.goto(origin+'/',{waitUntil:'domcontentloaded'});
-      await page.waitForFunction(()=>window.__JUBAO_R16__?.getState().status==='AUTH');
+      try {
+        await page.waitForFunction(()=>window.__JUBAO_R16__?.getState().status==='AUTH',null,{timeout:8000});
+      } catch(error) {
+        const diagnostic=await page.evaluate(()=>({
+          visibility:document.visibilityState,
+          modulePresent:Boolean(window.__JUBAO_R16__),
+          state:window.__JUBAO_R16__?.getState(),
+          r16Script:Boolean(document.querySelector('script[src="/bridge/r16_owner_dashboard_sync.js"]')),
+          panelCount:document.querySelectorAll('.r16-owner-panel').length
+        }));
+        throw new Error('R16 owner initialization diagnostic: '+JSON.stringify({diagnostic,
+          calls:calls.map(c=>({method:c.method,hasAuth:!!c.auth})),
+          browserErrors:errors})+'; original: '+String(error));
+      }
       check(label+' initial unauthorized session refused', (await page.evaluate(()=>window.__JUBAO_R16__.getState())).status==='AUTH');
       check(label+' original five tabs unchanged',(await page.locator('.section[data-page]').count())===5
         &&(await page.locator('[data-nav]').count())===5);
