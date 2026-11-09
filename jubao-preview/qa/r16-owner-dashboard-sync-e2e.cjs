@@ -97,7 +97,7 @@ async function main(){
           visibility:document.visibilityState,
           modulePresent:Boolean(window.__JUBAO_R16__),
           state:window.__JUBAO_R16__?.getState(),
-          r16Script:Boolean([...document.querySelectorAll("script")].some(x=>x.textContent.includes("JUBAO R16 | owner-session")),
+          r16Script:Boolean([...document.querySelectorAll("script")].some(x=>x.textContent.includes("JUBAO R16 | owner-session"))),
           panelCount:document.querySelectorAll('.r16-owner-panel').length
         }));
         throw new Error('R16 owner initialization diagnostic: '+JSON.stringify({diagnostic,
