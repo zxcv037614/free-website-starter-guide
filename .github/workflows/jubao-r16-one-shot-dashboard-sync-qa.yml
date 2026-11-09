@@ -1,4 +1,5 @@
 name: JUBAO R16 original mobile owner-session dashboard one-shot QA
+# Controlled diagnostic run for first-load browser initialization; no deploy.
 on:
   push:
     branches:
