@@ -44,7 +44,7 @@ jobs:
           ui=Path('jubao-preview/index.html')
           assert ui.stat().st_size>1_000_000
           for bad in ("import sqlite3", "import docker", "import requests", "import subprocess",
-                      "os.environ", "read_bytes(", "cmdline").read_", "environ").read_"):
+                      "os.environ", "read_bytes(", '/ "cmdline"', '/ "environ"'):
               assert bad not in s, bad
           assert 'st_ino' in s and 'st_dev' in s and '/ "comm"' in s and '/ "fd"' in s
           assert 'paper_profit_verified": False' in s
