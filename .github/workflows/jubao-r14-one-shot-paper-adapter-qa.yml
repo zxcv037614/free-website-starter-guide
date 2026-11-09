@@ -1,0 +1,45 @@
+name: JUBAO R14 isolated real paper WAL adapter QA one-shot
+on:
+  push:
+    branches:
+      - sandbox/jubao-v10-r14-readonly-live-paper-adapter-20261109
+    paths:
+      - .github/workflows/jubao-r14-one-shot-paper-adapter-qa.yml
+permissions:
+  contents: read
+jobs:
+  synthetic-readonly-wal:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: R9 paper-only validator regression
+        run: node --test jubao-preview/qa/r9-offline-paper-report.test.cjs
+      - name: R10 static offline SQLite regression
+        run: python -m unittest discover -s jubao-preview/qa -p 'test_r10_offline_export.py' -v
+      - name: R12 runtime observation claim regression
+        run: node --test jubao-preview/qa/r12-offline-runtime-evidence.test.cjs
+      - name: R14 live WAL read-only synthetic fixtures and output privacy
+        run: python -m unittest discover -s jubao-preview/qa -p 'test_r14_live_wal_aggregate.py' -v
+      - name: R14 fail-closed offline source audit
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import ast
+          p = Path("jubao-preview/bridge/r14_live_wal_aggregate.py")
+          source = p.read_text()
+          tree = ast.parse(source)
+          mods = [a.name for n in ast.walk(tree) if isinstance(n, ast.Import) for a in n.names]
+          assert not any(m.split(".")[0] in ("socket", "subprocess", "urllib", "requests", "http", "ftplib") for m in mods), mods
+          assert "?mode=ro&cache=private" in source
+          assert "PRAGMA query_only=ON" in source
+          assert "SELECT is_open, close_profit_abs FROM trades" in source
+          assert "source_identity_verified" in source and "'profit_verified': False" in source
+          print("R14 code static privacy/offline guards PASS (synthetic; NO VPS or deploy)")
+          PY
