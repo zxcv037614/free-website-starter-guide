@@ -1,0 +1,55 @@
+name: JUBAO R16 original mobile owner-session dashboard one-shot QA
+on:
+  push:
+    branches:
+      - sandbox/jubao-v10-r16-mobile-owner-paper-sync-20261109
+    paths:
+      - .github/workflows/jubao-r16-one-shot-dashboard-sync-qa.yml
+permissions:
+  contents: read
+jobs:
+  private-owner-ui:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: R9 paper source safety
+        run: node --test jubao-preview/qa/r9-offline-paper-report.test.cjs
+      - name: R10 offline SQLite regression
+        run: python -m unittest discover -s jubao-preview/qa -p 'test_r10_offline_export.py' -v
+      - name: R12 untrusted runtime source gate
+        run: node --test jubao-preview/qa/r12-offline-runtime-evidence.test.cjs
+      - name: R14 WAL read-only aggregate
+        run: python -m unittest discover -s jubao-preview/qa -p 'test_r14_live_wal_aggregate.py' -v
+      - name: R15 localhost Owner-token report endpoint
+        run: python -m unittest discover -s jubao-preview/qa -p 'test_r15_private_paper_endpoint.py' -v
+      - name: Install free Chromium browser QA
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install chromium
+      - name: R11 unchanged original black-gold five-page regression
+        run: node jubao-preview/qa/r11-sqlite-to-browser-e2e.cjs
+      - name: R16 original UI owner session same-origin sync regression
+        run: node jubao-preview/qa/r16-owner-dashboard-sync-e2e.cjs
+      - name: R16 fail-closed same-origin client static safety guard
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const s=fs.readFileSync('jubao-preview/bridge/r16_owner_dashboard_sync.js','utf8');
+          const original=fs.readFileSync('jubao-preview/index.html');
+          if(original.length<1000000)throw new Error('Original whale-UI reference replaced');
+          for(const x of ["credentials:'same-origin'","/api/v1/owner/paper-report",
+            "cache:'no-store'","response"]){} // not executable policy
+          if(!s.includes("credentials:'same-origin'"))throw new Error('No owner session');
+          if(!s.includes("'UNTRUSTED_PROVENANCE'"))throw new Error('No provenance gate');
+          if(!s.includes("resetBridgeData()"))throw new Error('No fail-closed reset');
+          if(/Authorization\s*:|localStorage\s*\.|JUBAO_R15_OWNER_TOKEN|https?:\/\/[^'"\s]+\/api\/v1\/paper-report/.test(s))
+            throw new Error('Unexpected browser secret or cross-origin auth');
+          console.log('R16 original logo/UI retained, session privacy static guard PASS, synthetic only');
+          NODE
