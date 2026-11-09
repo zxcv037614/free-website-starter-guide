@@ -24,3 +24,5 @@
 
 ## 固定工作規則
 本輪只在 GitHub 隔離 R16 分支提交，保留原黑金鯨魚 LOGO、五頁、不合併 main、不改 DigitalOcean/Render、不使用實盤 API、不增加收費資源、不新增定時監測。任何實際開發進度同步 Google Drive 00_CURRENT + 99_HISTORY，讀回核實並回報 GitHub SHA 和 CI 結果。
+## 原 R8 Content-Security-Policy 相容性
+原 `index.html` 的 CSP 只有 `script-src 'unsafe-inline'`，沒有允許從同源載入外部 `<script src=...>`；第一輪 R16 CI 嘗試引用外部 JS 因 CSP 阻擋，致模組根本未初始化。已核實這是原頁面安全政策，而非交易引擎或帳本故障。R16 隔離測試的本機伺服器改為**在回應時附加已知的 R16 JS 原始碼到內嵌 script**，並保留原始 `index.html` 檔案 byte-for-byte 不變。此操作僅在 GitHub Actions 的 localhost Sandbox 使用；正式部署不應自行放寬 CSP。日後正式整合應以經 Owner Gate 審核的可信構建產物注入／更新 CSP 為準，不得嵌入任何驗證 token 或實盤金鑰。
