@@ -95,8 +95,21 @@ def summarize(path):
 def generate(spot_db=None, futures_db=None, *, paper_attested=False):
     if not (spot_db or futures_db):
         raise Rejected('At least one existing local paper database is required')
-    if spot_db and futures_db and Path(spot_db).resolve() == Path(futures_db).resolve():
-        raise Rejected('One database cannot masquerade as two engines')
+    if spot_db and futures_db:
+        # R19: two distinct paths can still be hardlinks to ONE inode.
+        # Reject both path aliases and same-device/same-inode aliases before
+        # aggregating A1 and A2; source identity is still UNVERIFIED remotely.
+        try:
+            left = Path(spot_db).resolve(strict=True)
+            right = Path(futures_db).resolve(strict=True)
+            same = left == right or (
+                (left.stat().st_dev, left.stat().st_ino) ==
+                (right.stat().st_dev, right.stat().st_ino)
+            )
+        except OSError:
+            raise Rejected('One or more candidate paper databases unavailable') from None
+        if same:
+            raise Rejected('One database cannot masquerade as two engines')
     engines, source_times = [], []
     for kind, path in (('spot', spot_db), ('futures', futures_db)):
         if not path:
