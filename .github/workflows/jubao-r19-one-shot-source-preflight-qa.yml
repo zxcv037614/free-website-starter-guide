@@ -1,0 +1,52 @@
+name: JUBAO R19 independent paper source identity one-shot QA
+# Sandbox-only, push on this isolated branch, no cron or VPS / deployment.
+on:
+  push:
+    branches:
+      - sandbox/jubao-v10-r19-paper-source-identity-20261109
+    paths:
+      - .github/workflows/jubao-r19-one-shot-source-preflight-qa.yml
+      - jubao-preview/bridge/r14_live_wal_aggregate.py
+      - jubao-preview/bridge/r19_offline_source_preflight.py
+      - jubao-preview/qa/test_r14_live_wal_aggregate.py
+      - jubao-preview/qa/test_r19_offline_source_preflight.py
+      - jubao-preview/bridge/README_R19_SOURCE_IDENTITY_PREFLIGHT.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  r19-offline-proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Syntax guard
+        run: |
+          python -m py_compile jubao-preview/bridge/r14_live_wal_aggregate.py jubao-preview/bridge/r19_offline_source_preflight.py jubao-preview/qa/test_r14_live_wal_aggregate.py jubao-preview/qa/test_r19_offline_source_preflight.py
+      - name: R14 WAL and duplicate-source regression
+        run: python -m unittest discover -s jubao-preview/qa -p 'test_r14_live_wal_aggregate.py' -v
+      - name: R15 private paper endpoint unchanged regressions
+        run: python -m unittest discover -s jubao-preview/qa -p 'test_r15_private_paper_endpoint.py' -v
+      - name: R17 Session gateway unchanged regressions
+        run: python -m unittest discover -s jubao-preview/qa -p 'test_r17_owner_session_gateway.py' -v
+      - name: R19 redacted source identity and unsafe mode guard
+        run: python -m unittest discover -s jubao-preview/qa -p 'test_r19_offline_source_preflight.py' -v
+      - name: Static read-only and immutable five-page safety guard
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          x=Path('jubao-preview/bridge/r19_offline_source_preflight.py').read_text()
+          r14=Path('jubao-preview/bridge/r14_live_wal_aggregate.py').read_text()
+          ui=Path('jubao-preview/index.html')
+          assert ui.stat().st_size>1_000_000
+          assert 'st_ino' in r14 and 'st_dev' in r14
+          assert 'remote_identity_verified' in x
+          assert 'authentic_paper_ledger_verified' in x
+          assert not any(y in x for y in ('import requests','import sqlite3','import subprocess','import socket','paramiko','import docker'))
+          print('JUBAO_R19_OFFLINE_SOURCE_ONLY_FAIL_CLOSED_PASS')
+          PY
