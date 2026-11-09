@@ -15,6 +15,7 @@ import http.client
 import json
 import os
 import secrets
+import ssl
 import sys
 import time
 
@@ -87,7 +88,8 @@ def make_server(*, owner_secret, upstream_token, upstream_port=8765,
 
         def _origin_ok(self):
             host = self.headers.get("Host", "")
-            return self._host_ok() and self.headers.get("Origin", "") == "http://" + host
+            scheme = "https" if isinstance(self.connection, ssl.SSLSocket) else "http"
+            return self._host_ok() and self.headers.get("Origin", "") == scheme + "://" + host
 
         def _send(self, status, payload, cookie=None):
             raw = json.dumps(payload, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
