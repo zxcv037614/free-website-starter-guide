@@ -1,4 +1,5 @@
 name: JUBAO R16 original mobile owner-session dashboard one-shot QA
+# Controlled syntax-verified retry; one-shot sandbox only. No schedule or deployment.
 # Controlled rerun: respect original inline-only Content-Security-Policy; original file unchanged.
 # Controlled diagnostic run for first-load browser initialization; no deploy.
 on:
