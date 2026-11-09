@@ -1,4 +1,5 @@
 name: JUBAO R15 owner-private paper endpoint one-shot QA
+# Controlled retry after synthetic decimal-format assertion correction; no automated reruns.
 on:
   push:
     branches:
