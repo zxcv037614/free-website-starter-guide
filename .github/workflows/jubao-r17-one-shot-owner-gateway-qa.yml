@@ -1,0 +1,45 @@
+name: JUBAO R17 local Owner Session gateway one-shot QA
+# Sandbox-only; no schedule, deployment, secrets or DigitalOcean access.
+on:
+  push:
+    branches:
+      - sandbox/jubao-v10-r17-owner-gateway-20261109
+    paths:
+      - 'jubao-preview/bridge/r17_local_owner_session_gateway.py'
+      - 'jubao-preview/bridge/README_R17_LOCAL_OWNER_GATEWAY.md'
+      - 'jubao-preview/qa/test_r17_owner_session_gateway.py'
+      - '.github/workflows/jubao-r17-one-shot-owner-gateway-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  r17-local-gateway:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout isolated source
+        uses: actions/checkout@v4
+      - name: Python syntax
+        run: |
+          python3 --version
+          python3 -m py_compile jubao-preview/bridge/r17_local_owner_session_gateway.py jubao-preview/qa/test_r17_owner_session_gateway.py
+      - name: R14 synthetic WAL regressions
+        run: python3 -m unittest discover -s jubao-preview/qa -p 'test_r14_*.py' -v
+      - name: R15 private paper endpoint regressions
+        run: python3 -m unittest discover -s jubao-preview/qa -p 'test_r15_*.py' -v
+      - name: R17 owner-session synthetic and loopback tests
+        run: python3 -m unittest discover -s jubao-preview/qa -p 'test_r17_*.py' -v
+      - name: Inspect unsafe deployment capabilities
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s = Path('jubao-preview/bridge/r17_local_owner_session_gateway.py').read_text()
+          assert 'HOST = "127.0.0.1"' in s
+          assert 'from r15_private_paper_endpoint import public_report' in s
+          assert 'HttpOnly; Secure;' in s
+          assert 'SameSite=Strict' in s
+          assert '0.0.0.0' not in s.split('HOST = ', 1)[1].split('\n', 1)[0]
+          print('R17_SANDBOX_LOCALHOST_ONLY_PASS')
+          PY
