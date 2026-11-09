@@ -225,7 +225,9 @@
     window.addEventListener('pagehide',()=>window.clearInterval(timerId),{once:true});
     refresh();
   }
-  window.__JUBAO_R16__={refresh,validate,stop:()=>{STORE.manualOverride=true;resetBridgeData();show('MANUAL','已停止本頁自動讀取');},
+  window.__JUBAO_R16__={refresh,validate,
+    clearSession:()=>{STORE.manualOverride=false;resetBridgeData();show('AUTH','Owner 已登出；不再顯示先前自動模擬損益');},
+    stop:()=>{STORE.manualOverride=true;resetBridgeData();show('MANUAL','已停止本頁自動讀取');},
     getState:()=>({status:STORE.status,lastFetchUtc:STORE.lastFetchUtc,
       applied:STORE.applied,manualOverride:STORE.manualOverride})};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
