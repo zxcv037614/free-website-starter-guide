@@ -34,6 +34,10 @@ class OfflineExporterTests(unittest.TestCase):
             con.execute('CREATE TABLE trades (id INTEGER PRIMARY KEY, is_open INTEGER, close_profit_abs REAL)')
             con.executemany('INSERT INTO trades (is_open,close_profit_abs) VALUES (?,?)', rows)
             con.commit()
+        # When synthetic fixtures are recreated after setUp, keep their mtime
+        # relative to the frozen fixture clock rather than runner wall time.
+        if hasattr(self, 'now'):
+            os.utime(self.db, (self.now - 3600, self.now - 3600))
 
     def mkcfg(self, **updates):
         config = {'dry_run': True, 'trading_mode': 'spot', 'stake_currency': 'USDT',
