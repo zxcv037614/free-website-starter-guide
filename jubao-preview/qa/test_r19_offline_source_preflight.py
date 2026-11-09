@@ -104,7 +104,10 @@ class R19OfflineSourceTests(unittest.TestCase):
 
     def test_11_stale_snapshot_marked(self):
         d = self.doc()
-        d["captured_at_utc"] = time_str(self.now - timedelta(hours=1))
+        captured = self.now - timedelta(hours=1)
+        d["captured_at_utc"] = time_str(captured)
+        for engine in d["engines"]:
+            engine["last_heartbeat_utc"] = time_str(captured - timedelta(minutes=1))
         self.assertIn("OBSERVATION_STALE_OVER_30M", self.validate(d)["reasons"])
 
     def test_12_future_snapshot_rejected(self):
