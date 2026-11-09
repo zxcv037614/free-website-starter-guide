@@ -1,4 +1,5 @@
 name: JUBAO R14 isolated real paper WAL adapter QA one-shot
+# Single controlled rerun following synthetic R10 fixture clock stabilization.
 on:
   push:
     branches:
