@@ -1,0 +1,52 @@
+name: JUBAO R15 owner-private paper endpoint one-shot QA
+on:
+  push:
+    branches:
+      - sandbox/jubao-v10-r15-owner-private-paper-endpoint-20261109
+    paths:
+      - .github/workflows/jubao-r15-one-shot-owner-bridge-qa.yml
+permissions:
+  contents: read
+jobs:
+  owner-private-paper-qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: R9 existing paper-only source validator
+        run: node --test jubao-preview/qa/r9-offline-paper-report.test.cjs
+      - name: R10 synthetic offline SQLite export regression
+        run: python -m unittest discover -s jubao-preview/qa -p 'test_r10_offline_export.py' -v
+      - name: R12 untrusted offline runtime evidence regression
+        run: node --test jubao-preview/qa/r12-offline-runtime-evidence.test.cjs
+      - name: R14 WAL read-only aggregate regression
+        run: python -m unittest discover -s jubao-preview/qa -p 'test_r14_live_wal_aggregate.py' -v
+      - name: R15 private authenticated paper endpoint synthetic tests
+        run: python -m unittest discover -s jubao-preview/qa -p 'test_r15_private_paper_endpoint.py' -v
+      - name: Install Chromium for existing mobile R11 UI regression
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install chromium
+      - name: Original black-gold R8 UI R11 SQLite-to-browser synthetic regression
+        run: node jubao-preview/qa/r11-sqlite-to-browser-e2e.cjs
+      - name: R15 static network, authorization and no-trading safety guard
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('jubao-preview/bridge/r15_private_paper_endpoint.py').read_text()
+          assert 'HOST = "127.0.0.1"' in s
+          assert 'self.headers.get("Authorization"' in s
+          assert 'hmac.compare_digest' in s
+          assert 'Access-Control-Allow-Origin' in s and 'Deliberately no' in s
+          assert 'Cache-Control", "no-store"' in s
+          assert 'r14.generate' in s
+          assert 'def do_POST' in s and 'def do_DELETE' in s
+          assert 'self.log_message' not in s
+          print('R15 private localhost-only fail-closed source guard PASS (synthetic, NOT VPS)')
+          PY
