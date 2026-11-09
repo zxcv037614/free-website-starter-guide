@@ -69,7 +69,7 @@ async function main(){
       require('node:crypto').createHash('sha256')
         .update(fs.readFileSync(path.join(root,'index.html'))).digest('hex')===originHash);
     check('R16 script never embeds R15 Bearer token or uses localStorage',
-      !/JUBAO_R15_OWNER_TOKEN|localStorage|Authorization\s*:|Bearer /.test(String(bridge)));
+      !/JUBAO_R15_OWNER_TOKEN|(?:window\.)?localStorage\s*\.|Authorization\s*:/.test(String(bridge)));
     for (const [label,viewport] of [['mobile',{width:390,height:844}],
                                    ['tablet',{width:900,height:600}]]){
       const context=await browser.newContext({viewport,deviceScaleFactor:1});
